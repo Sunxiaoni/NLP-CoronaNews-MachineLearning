@@ -1,0 +1,199 @@
+!pip install top2vec
+import numpy as np 
+import pandas as pd 
+import json
+import os
+import ipywidgets as widgets
+from IPython.display import clear_output, display
+from top2vec import Top2Vec
+
+from google.colab import files
+uploaded = files.upload()
+
+import io
+papers_df = pd.read_csv(io.BytesIO(uploaded["master_data_casestudy.csv"]), delimiter=";", error_bad_lines=False)
+papers_df['papers_id'] = range(1, len(papers_df)+1)
+papers_df = papers_df[["papers_id", "Content", "URL"]]
+# papers_df.head()
+
+def filter_short(papers_df):
+    papers_df["token_counts"] = papers_df["Content"].str.split().map(len)
+    papers_df = papers_df[papers_df.token_counts>200].reset_index(drop=True)
+    papers_df.drop('token_counts', axis=1, inplace=True)
+    
+    return papers_df
+papers_df = filter_short(papers_df)
+papers_df = papers_df.drop_duplicates(subset=['Content'], keep='last')
+papers_df.head()
+papers_df.shape
+
+### data preprocessing is needed in Top2Vec actually
+import re
+
+def decontracted(phrase):
+    # specific
+    phrase = re.sub(r"won't", "will not", phrase)
+    phrase = re.sub(r"can\'t", "can not", phrase)
+
+    # general
+    phrase = re.sub(r"n\'t", " not", phrase)
+    phrase = re.sub(r"\'re", " are", phrase)
+    phrase = re.sub(r"\'s", " is", phrase)
+    phrase = re.sub(r"\'d", " would", phrase)
+    phrase = re.sub(r"\'ll", " will", phrase)
+    phrase = re.sub(r"\'t", " not", phrase)
+    phrase = re.sub(r"\'ve", " have", phrase)
+    phrase = re.sub(r"\'m", " am", phrase)
+    return phrase
+
+
+stopwords= set(['the', 'i', 'me', 'my', 'myself', 'we', 'our', 'ours', 'ourselves', 'you', "you're", "you've",\
+            "you'll", "you'd", 'your', 'yours', 'yourself', 'yourselves', 'he', 'him', 'his', 'himself', \
+            'she', "she's", 'her', 'hers', 'herself', 'it', "it's", 'its', 'itself', 'they', 'them', 'their',\
+            'theirs', 'themselves', 'what', 'which', 'who', 'whom', 'this', 'that', "that'll", 'these', 'those', \
+            'am', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'having', 'do', 'does', \
+            'did', 'doing', 'a', 'an', 'the', 'and', 'but', 'if', 'or', 'because', 'as', 'until', 'while', 'of', \
+            'at', 'by', 'for', 'with', 'about', 'against', 'between', 'into', 'through', 'during', 'before', 'after',\
+            'above', 'below', 'to', 'from', 'up', 'down', 'in', 'out', 'on', 'off', 'over', 'under', 'again', 'further',\
+            'then', 'once', 'here', 'there', 'when', 'where', 'why', 'how', 'all', 'any', 'both', 'each', 'few', 'more',\
+            'most', 'other', 'some', 'such', 'only', 'own', 'same', 'so', 'than', 'too', 'very', \
+            's', 't', 'can', 'will', 'just', 'don', "don't", 'should', "should've", 'now', 'd', 'll', 'm', 'o', 're', \
+            've', 'y', 'ain', 'aren', "aren't", 'couldn', "couldn't", 'didn', "didn't", 'doesn', "doesn't", 'hadn',\
+            "hadn't", 'hasn', "hasn't", 'haven', "haven't", 'isn', "isn't", 'ma', 'mightn', "mightn't", 'mustn',\
+            "mustn't", 'needn', "needn't", 'shan', "shan't", 'shouldn', "shouldn't", 'wasn', "wasn't", 'weren', "weren't", \
+            'won', "won't", 'wouldn', "wouldn't","t","eri",'y',"re",'d'])
+
+papers_df["Content"] = papers_df["Content"].str.lower()
+
+
+# Exclude stopwords with Python's list comprehension and pandas.DataFrame.apply.
+papers_df['Content'] = papers_df['Content'].apply(lambda x: ' '.join([word for word in x.split() if word not in (stopwords)]))
+
+!pip install nltk
+!pip install pyspellchecker
+import nltk
+nltk.download('wordnet')
+from nltk.stem import WordNetLemmatizer  
+from spellchecker import SpellChecker
+from tqdm import tqdm
+lemmatizer = WordNetLemmatizer() 
+spell = SpellChecker()
+preprocessed_data=pd.DataFrame()
+
+spell = SpellChecker(distance=1)
+def Correct(x):
+    return spell.correction(x)
+
+def Text_preprocessing(sentance):
+    sentance = decontracted(sentance)
+    sentance = re.sub("\S*\d\S*", "", sentance).strip()
+    sentance = re.sub('[^A-Za-z]+', ' ', sentance)
+    sentance = ' '.join(e.lower() for e in sentance.split() if e.lower() not in stopwords)
+    sentance = ' '.join(Correct(w) for w in sentance.split())
+    sentance = ' '.join(spell.correction(w) for w in sentance.split())
+    sentance = ' '.join(lemmatizer.lemmatize(w) for w in sentance.split())
+    return sentance
+
+papers_df['Content']= papers_df['Content'].apply(Text_preprocessing)
+
+# clarify "id" for better data retrive 
+Content = papers_df['Content'].astype(str).values.tolist()
+
+# train the model
+top2vec = Top2Vec(documents=Content, document_ids=papers_id, speed="learn", workers=4)
+
+## 1. Search Topics
+keywords_select_st = widgets.Label('Enter keywords seperated by space: ')
+display(keywords_select_st)
+
+keywords_input_st = widgets.Text()
+display(keywords_input_st)
+
+keywords_neg_select_st = widgets.Label('Enter negative keywords seperated by space: ')
+display(keywords_neg_select_st)
+
+keywords_neg_input_st = widgets.Text()
+display(keywords_neg_input_st)
+
+doc_num_select_st = widgets.Label('Choose number of topics: ')
+display(doc_num_select_st)
+
+doc_num_input_st = widgets.Text(value='5')
+display(doc_num_input_st)
+
+def display_similar_topics(*args):
+    
+    clear_output()
+    display(keywords_select_st)
+    display(keywords_input_st)
+    display(keywords_neg_select_st)
+    display(keywords_neg_input_st)
+    display(doc_num_select_st)
+    display(doc_num_input_st)
+    display(keyword_btn_st)
+    
+    try:
+        topic_words, word_scores, topic_scores, topic_nums = top2vec.search_topics(keywords=keywords_input_st.value.split(),num_topics=int(doc_num_input_st.value), keywords_neg=keywords_neg_input_st.value.split())
+        for topic in topic_nums:
+            top2vec.generate_topic_wordcloud(topic, background_color="black")
+        
+    except Exception as e:
+        print(e)
+        
+keyword_btn_st = widgets.Button(description="show topics")
+display(keyword_btn_st)
+keyword_btn_st.on_click(display_similar_topics)
+
+## 2. Check topic numbers
+model = top2vec
+model.get_num_topics()
+
+## 3. Check topic size 
+topic_sizes, topic_nums = model.get_topic_sizes()
+topic_sizes
+topic_nums
+
+## 4. Get all topics
+topic_words, word_scores, topic_nums = model.get_topics(20)
+topic_words, word_scores, topic_nums
+
+## 5. Get all documents with documents id and score
+documents, document_scores, document_ids = model.search_documents_by_topic(topic_num=2, num_docs=149)
+for doc, score, doc_id in zip(documents, document_scores, document_ids):
+    print(f"Document: {doc_id}, Score: {score}")
+    print("-----------")
+    print(doc)
+    print("-----------")
+    print()
+    
+## 6. Semantic search, check by keywords
+documents, document_scores, document_ids = model.search_documents_by_keywords(keywords=["china", "huawei", "germany"], num_docs=5)
+for doc, score, doc_id in zip(documents, document_scores, document_ids):
+    print(f"Document: {doc_id}, Score: {score}")
+    print("-----------")
+    print(doc)
+    print("-----------")
+    print()
+    
+## 7. Check topics according to document id
+# Get single doc topic
+doc_topics, doc_dist, topic_words, topic_word_scores = model.get_documents_topics(doc_ids==744)
+print(f"Document topic: {doc_topics}, doc_dist: {doc_dist}, topic words: {topic_words}, topic word scores: {topic_word_scores}")
+
+## 8. check topics, topic score for all documents
+# get all docs topic
+doc_topics,  doc_ids, topic_words, topic_word_scores = model.get_documents_topics(doc_ids=papers_id)
+for doc_topic, doc_id, topic_word, topic_word_score, in zip(doc_topics, doc_ids, topic_words, topic_word_scores):
+  print(f"Document topic: {doc_topic}, Document index: {doc_id}")
+  print("-----------")
+  print(f"topic words: {topic_word}, topic word scores: {topic_word_score}")
+  print("----------------------------------------------")
+  print()
+  
+## 9. Check similar keywords
+words, word_scores = model.similar_words(keywords=["china", "huawei", "germany", "mobile"], keywords_neg=[], num_words=20)
+for word, score in zip(words, word_scores):
+    print(f"{word} {score}")
+    
+
+
