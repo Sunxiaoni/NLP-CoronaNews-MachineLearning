@@ -1,0 +1,99 @@
+from sklearn.cluster import KMeans
+from sklearn import metrics
+
+# define a dictionary that contains all of our relevant info.
+results_dict = {}
+
+# define how many clusters we want to test up to.
+num_of_clusters = 18
+
+# run through each instance of K
+for k in range(2, num_of_clusters):
+    print("-" * 100)
+
+    # define the next dictionary to hold all the results of this run.
+    results_dict[k] = {}
+
+    # create an instance of the model, and fit the training data to it.
+    kmeans = KMeans(n_clusters=k, random_state=0).fit(train_vectors_dbow)
+
+    # define the silhouette score
+    sil_score = metrics.silhouette_score(train_vectors_dbow, kmeans.labels_, metric='euclidean')
+
+    # store the different metrics
+    results_dict[k]['silhouette_score'] = sil_score
+    results_dict[k]['inertia'] = kmeans.inertia_
+    results_dict[k]['score'] = kmeans.score
+    results_dict[k]['model'] = kmeans
+
+    # print the results
+    print("Number of Clusters: {}".format(k))
+    print('Silhouette Score:', sil_score)
+
+"""
+run the results on our PCA data set to see what the output would look like
+"""
+# define a dictionary that contains all of our relevant info.
+results_dict_pca = {}
+
+# define how many clusters we want to test up to.
+num_of_clusters = 18
+
+# run through each instance of K
+for k in range(2, num_of_clusters):
+    print("-" * 100)
+
+    # define the next dictionary to hold all the results of this run.
+    results_dict_pca[k] = {}
+
+    # create an instance of the model, and fit the training data to it.
+    kmeans = KMeans(n_clusters=k, random_state=0).fit(pca_dataset)
+
+    # define the silhouette score
+    sil_score = metrics.silhouette_score(pca_dataset, kmeans.labels_, metric='euclidean')
+
+    # store the different metrics
+    results_dict_pca[k]['silhouette_score'] = sil_score
+    results_dict_pca[k]['inertia'] = kmeans.inertia_
+    results_dict_pca[k]['score'] = kmeans.score
+    results_dict_pca[k]['model'] = kmeans
+
+    # print the results
+    print("Number of Clusters: {}".format(k))
+    print('Silhouette Score:', sil_score)
+
+# from the result of PCA, cluster number equals to 3, the silhouette scrore is the biggest which means the perfect cluster numbers.
+"""
+Plot the result with clusters for 2 and 3
+"""
+clusters = [2, 3]
+
+for cluster in clusters:
+    print('-' * 100)
+
+    kmeans = KMeans(n_clusters=cluster, random_state=0).fit(pca_dataset)
+
+    # define the cluster centers
+    cluster_centers = kmeans.cluster_centers_
+    C1 = cluster_centers[:, 0]
+    C2 = cluster_centers[:, 1]
+
+    # create a new plot
+    plt.figure()
+
+    # take the scaled data in this example.
+    x = pca_dataset['principal component 1']
+    y = pca_dataset['principal component 2']
+
+    # define the axes labels
+    column_names = pca_dataset.columns
+    plt.xlabel(column_names[0])
+    plt.ylabel(column_names[1])
+
+    # Visualize it:
+    plt.scatter(x, y, c=kmeans.labels_.astype(float), cmap='winter')
+    plt.scatter(C1, C2, marker="x", color='r')
+
+    # Plot the clustered data
+    plt.title('Visualization of clustered data with {} clusters'.format(cluster), fontweight='bold')
+    plt.show()
