@@ -1,0 +1,56 @@
+from sklearn.cluster import DBSCAN
+from collections import Counter
+import matplotlib.pyplot as plt
+
+model_DBSCAN_cluster_1 = DBSCAN(eps=3, min_samples=3, metric="euclidean").\
+    fit(df_A_cluster_1)
+model_DBSCAN_cluster_2 = DBSCAN(eps=3, min_samples=3, metric="euclidean").\
+    fit(df_A_cluster_2)
+model_DBSCAN_cluster_3 = DBSCAN(eps=3, min_samples=3, metric="euclidean").\
+    fit(df_A_cluster_3)
+model_DBSCAN_cluster_4 = DBSCAN(eps=3, min_samples=3, metric="euclidean").\
+    fit(df_A_cluster_4)
+
+outlier_df_DBSCAN_cluster_1 = df_A_cluster_1[model_DBSCAN_cluster_1.labels_ == -1]
+clusters_df_DBSCAN_cluster_1 = df_A_cluster_1[model_DBSCAN_cluster_1.labels_ != -1]
+clusters_DBSCAN_cluster_1 = Counter(model_DBSCAN_cluster_1.labels_)
+df_A_cluster_1['DBSCAN_clusters'] = model_DBSCAN_cluster_1.labels_
+df_A_cluster_1.loc[:,'ID'] = df['ID']
+
+outlier_df_DBSCAN_cluster_2 = df_A_cluster_2[model_DBSCAN_cluster_2.labels_ == -1]
+clusters_df_DBSCAN_cluster_2 = df_A_cluster_2[model_DBSCAN_cluster_2.labels_ != -1]
+clusters_DBSCAN_cluster_2 = Counter(model_DBSCAN_cluster_2.labels_)
+df_A_cluster_2['DBSCAN_clusters'] = model_DBSCAN_cluster_2.labels_
+df_A_cluster_2.loc[:,'ID'] = df['ID']
+
+outlier_df_DBSCAN_cluster_3 = df_A_cluster_3[model_DBSCAN_cluster_3.labels_ == -1]
+clusters_df_DBSCAN_cluster_3 = df_A_cluster_3[model_DBSCAN_cluster_3.labels_ != -1]
+clusters_DBSCAN_cluster_3 = Counter(model_DBSCAN_cluster_3.labels_)
+df_A_cluster_3['DBSCAN_clusters'] = model_DBSCAN_cluster_3.labels_
+df_A_cluster_3.loc[:,'ID'] = df['ID']
+
+outlier_df_DBSCAN_cluster_4 = df_A_cluster_4[model_DBSCAN_cluster_4.labels_ == -1]
+clusters_df_DBSCAN_cluster_4 = df_A_cluster_4[model_DBSCAN_cluster_4.labels_ != -1]
+clusters_DBSCAN_cluster_4 = Counter(model_DBSCAN_cluster_4.labels_)
+df_A_cluster_4['DBSCAN_clusters'] = model_DBSCAN_cluster_4.labels_
+df_A_cluster_4.loc[:,'ID'] = df['ID']
+
+df_cluster_total = pd.concat([df_A_cluster_1, df_A_cluster_2, df_A_cluster_3, df_A_cluster_4], ignore_index=True)
+
+####################### merge with original dataset with content and url ####################### 
+df_join_left = pd.merge(df_cluster_total, df, how='left', on=['ID'])
+# df_join_left = df_join_left['ID', 'DBSCAN_clusters', 'agglomerative_clusters', 'URL', 'Content']
+file_cluster_out = "Clusters_total.xlsx"
+
+df_join_left.to_excel(file_cluster_out, index=False)
+print(df_join_left)
+
+# merge cluster df with paper df
+import pandas as pd
+df = pd.read_excel('/Users/xiaoni/PycharmProjects/LDA/Clusters_total.xlsx')
+df = df.drop(columns=['principal component 1', 'principal component 2', 'principal component 3'])
+# df = df['ID', 'DBSCAN_clusters', 'agglomerative_clusters', 'URL', 'Content']
+df= df.sort_values(by=['ID'])
+df = df.rename(columns={'agglomerative_clusters':'Agglomerative_Clusters', 'DBSCAN_clusters':'DBSCAN_Clusters'})
+# df = df.head(5)
+df.to_csv('final_TotalClusters_clean.csv', index=False)
