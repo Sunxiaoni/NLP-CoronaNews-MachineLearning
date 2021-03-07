@@ -1,3 +1,3 @@
-# Data Architecture Explanation  
-<h1> 1. Project Introduction
+<h1> Data Architecture Explanation  
+<h2> 1. Project Introduction
 
