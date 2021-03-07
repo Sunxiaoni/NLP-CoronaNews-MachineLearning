@@ -1,0 +1,123 @@
+# Step 1, read csv "paper.csv" to dataframe, load libraries 
+
+# Step 2, data preprocessing on ["content"], lower case, tokenizer, stop words remove, stem/lemmatize
+
+import re
+
+def decontracted(phrase):
+    # specific
+    phrase = re.sub(r"won't", "will not", phrase)
+    phrase = re.sub(r"can\'t", "can not", phrase)
+
+    # general
+    phrase = re.sub(r"n\'t", " not", phrase)
+    phrase = re.sub(r"\'re", " are", phrase)
+    phrase = re.sub(r"\'s", " is", phrase)
+    phrase = re.sub(r"\'d", " would", phrase)
+    phrase = re.sub(r"\'ll", " will", phrase)
+    phrase = re.sub(r"\'t", " not", phrase)
+    phrase = re.sub(r"\'ve", " have", phrase)
+    phrase = re.sub(r"\'m", " am", phrase)
+    return phrase
+
+
+stopwords= set(['the', 'i', 'me', 'my', 'myself', 'we', 'our', 'ours', 'ourselves', 'you', "you're", "you've",\
+            "you'll", "you'd", 'your', 'yours', 'yourself', 'yourselves', 'he', 'him', 'his', 'himself', \
+            'she', "she's", 'her', 'hers', 'herself', 'it', "it's", 'its', 'itself', 'they', 'them', 'their',\
+            'theirs', 'themselves', 'what', 'which', 'who', 'whom', 'this', 'that', "that'll", 'these', 'those', \
+            'am', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'having', 'do', 'does', \
+            'did', 'doing', 'a', 'an', 'the', 'and', 'but', 'if', 'or', 'because', 'as', 'until', 'while', 'of', \
+            'at', 'by', 'for', 'with', 'about', 'against', 'between', 'into', 'through', 'during', 'before', 'after',\
+            'above', 'below', 'to', 'from', 'up', 'down', 'in', 'out', 'on', 'off', 'over', 'under', 'again', 'further',\
+            'then', 'once', 'here', 'there', 'when', 'where', 'why', 'how', 'all', 'any', 'both', 'each', 'few', 'more',\
+            'most', 'other', 'some', 'such', 'only', 'own', 'same', 'so', 'than', 'too', 'very', \
+            's', 't', 'can', 'will', 'just', 'don', "don't", 'should', "should've", 'now', 'd', 'll', 'm', 'o', 're', \
+            've', 'y', 'ain', 'aren', "aren't", 'couldn', "couldn't", 'didn', "didn't", 'doesn', "doesn't", 'hadn',\
+            "hadn't", 'hasn', "hasn't", 'haven', "haven't", 'isn', "isn't", 'ma', 'mightn', "mightn't", 'mustn',\
+            "mustn't", 'needn', "needn't", 'shan', "shan't", 'shouldn', "shouldn't", 'wasn', "wasn't", 'weren', "weren't", \
+            'won', "won't", 'wouldn', "wouldn't","t","eri",'y',"re",'d'])
+            
+papers_df["Content"] = papers_df["Content"].str.lower()
+
+
+# Exclude stopwords with Python's list comprehension and pandas.DataFrame.apply.
+papers_df['Content'] = papers_df['Content'].apply(lambda x: ' '.join([word for word in x.split() if word not in (stopwords)]))
+
+!pip install nltk
+!pip install pyspellchecker
+import nltk
+nltk.download('wordnet')
+from nltk.stem import WordNetLemmatizer  
+from spellchecker import SpellChecker
+from tqdm import tqdm
+lemmatizer = WordNetLemmatizer() 
+spell = SpellChecker()
+preprocessed_data=pd.DataFrame()
+
+spell = SpellChecker(distance=1)
+def Correct(x):
+    return spell.correction(x)
+
+def Text_preprocessing(sentance):
+    sentance = decontracted(sentance)
+    sentance = re.sub("\S*\d\S*", "", sentance).strip()
+    sentance = re.sub('[^A-Za-z]+', ' ', sentance)
+    sentance = ' '.join(e.lower() for e in sentance.split() if e.lower() not in stopwords)
+    sentance = ' '.join(Correct(w) for w in sentance.split())
+    sentance = ' '.join(spell.correction(w) for w in sentance.split())
+    sentance = ' '.join(lemmatizer.lemmatize(w) for w in sentance.split())
+    return sentance
+
+papers_df['Content']= papers_df['Content'].apply(Text_preprocessing)
+
+####################################################################### Doc2Vec #######################################################################
+from tqdm import tqdm
+tqdm.pandas(desc="progress-bar")
+from gensim.models import Doc2Vec
+from sklearn import utils
+import gensim
+from gensim.models.doc2vec import TaggedDocument
+import re
+!pip install sklearn 
+from sklearn.model_selection import train_test_split
+
+def label_sentences(corpus, label_type):
+    labeled = []
+    for i, v in enumerate(corpus):
+        label = label_type + '_' + str(i)
+        labeled.append(TaggedDocument(v.split(), [label]))
+
+    return labeled
+
+
+X_train, X_test = train_test_split(data.Content,random_state=0, test_size=0.3)
+X_train = label_sentences(X_train, 'Train')
+X_test = label_sentences(X_test, 'Test')
+all_data = X_train + X_test
+
+# print(all_data[:10])
+
+# Hyperparameter optimization on Doc2Vec
+model_dbow = Doc2Vec(dm=0, vector_size=300, negative=5, min_count=1, alpha=0.065, min_alpha=0.065)
+model_dbow.build_vocab([x for x in tqdm(all_data)])
+
+for epoch in range(30):
+    model_dbow.train(utils.shuffle([x for x in tqdm(all_data)]),
+
+                     total_examples=len(all_data), epochs=1)
+    model_dbow.alpha -= 0.002
+    model_dbow.min_alpha = model_dbow.alpha
+
+import numpy as np
+
+
+def get_vectors(model, corpus_size, vectors_size, vectors_type):
+    vectors = np.zeros((corpus_size, vectors_size))
+    for i in range(0, corpus_size):
+        prefix = vectors_type + '_' + str(i)
+        vectors[i] = model.docvecs[prefix]
+    return vectors
+
+
+train_vectors_dbow = get_vectors(model_dbow, len(X_train), 300, 'Train')
+test_vectors_dbow = get_vectors(model_dbow, len(X_test), 300, 'Test')
