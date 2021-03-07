@@ -1,0 +1,36 @@
+from sklearn.decomposition import PCA
+import numpy as np
+import pandas as pd
+from matplotlib import pyplot as plt
+from sklearn.preprocessing import StandardScaler
+df_st = StandardScaler().fit_transform(train_vectors_dbow)
+# pd.DataFrame(df_st, columns=df.columns).head()
+# pass through the scaled data set into our PCA class object
+pca = PCA().fit(df_st)
+
+# plot the Cumulative Summation of the Explained Variance
+plt.figure()
+plt.plot(np.cumsum(pca.explained_variance_ratio_))
+
+# define the labels & title
+plt.xlabel('Number of Components', fontsize = 15)
+plt.ylabel('Variance (%)', fontsize = 15)
+plt.title('Explained Variance', fontsize = 20)
+
+plt.show()
+
+# create a PCA modified dataset
+pca_dataset = PCA(n_components=2).fit(train_vectors_dbow).transform(train_vectors_dbow)
+
+# store it in a new data frame
+pca_dataset= pd.DataFrame(data = pca_dataset, columns = ['principal component 1', 'principal component 2'])
+#### Scatter plot
+plt.xlabel('Principal Component 1', fontsize = 15)
+plt.ylabel('Principal Component 2', fontsize = 15)
+plt.title('2 Component PCA', fontsize = 20)
+
+# plot the figure
+plt.figure()
+plt.scatter(pca_dataset['principal component 1'], pca_dataset['principal component 2'], c='royalBlue', s = 50)
+# show the plot
+plt.show()
