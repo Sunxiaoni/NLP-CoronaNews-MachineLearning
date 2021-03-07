@@ -1,0 +1,32 @@
+import pandas as pd
+import numpy as np
+from matplotlib import pyplot as plt
+from sklearn.cluster import AgglomerativeClustering
+import scipy.cluster.hierarchy as sch
+
+X = pca_dataset.iloc[:, [0, 1]].values
+
+
+from sklearn.cluster import AgglomerativeClustering
+from collections import Counter
+
+#cluster = AgglomerativeClustering(n_clusters=3, affinity='euclidean', linkage='ward')
+#cluster.fit_predict(pca_dataset)
+model_A = AgglomerativeClustering(n_clusters=4, affinity='euclidean', linkage='ward')
+
+
+model_A.fit(X)
+
+labels_A = model_A.labels_
+
+
+clusters_A = Counter(labels_A)
+
+pca_dataset['agglomerative_clusters'] = labels_A
+
+pca_dataset.loc[:,'ID'] = df['ID']
+
+df_A_cluster_1 = pca_dataset.loc[pca_dataset['agglomerative_clusters'].isin(['0'])]
+df_A_cluster_2 = pca_dataset.loc[pca_dataset['agglomerative_clusters'].isin(['1'])]
+df_A_cluster_3 = pca_dataset.loc[pca_dataset['agglomerative_clusters'].isin(['2'])]
+df_A_cluster_4 = pca_dataset.loc[pca_dataset['agglomerative_clusters'].isin(['3'])]
