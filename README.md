@@ -8,9 +8,8 @@ The contribution of the coding divided into team and individual works, the purpo
 
 Entire Pipeline:
 1. Data crawling for English news
-2. Data preprocessing
-3. Doc2Vec
-4. PCA
+2. Data preprocessing and Doc2Vec
+3. PCA
 5. K-means clustering and elbow method
 6. Aggolomerative clustering [chosen]
 7. Danse based algorithm: DBSCAN clustering [chosen]
