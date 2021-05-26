@@ -10,11 +10,11 @@ Entire Pipeline:
 1. Data crawling for English news
 2. Data preprocessing and Doc2Vec
 3. PCA
-5. K-means clustering and elbow method
-6. Aggolomerative clustering [chosen]
-7. Danse based algorithm: DBSCAN clustering [chosen]
-8. Danse based algorithm: Optics
+4. K-means clustering and elbow method
+5. Aggolomerative clustering [chosen]
+6. Danse based algorithm: DBSCAN clustering [chosen]
+7. Danse based algorithm: Optics
+8. Top2Vec for topic detection
 9. Classification: Native Bayes, XgBoost
-10. Top2Vec for topic detection
-11. Consolidate to one unioned dataset and save into database
-12. Connect database to visulisation
+10. Consolidate to one unioned dataset and save into database
+11. Connect database to visulisation
