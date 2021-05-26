@@ -1,0 +1,119 @@
+from sklearn import datasets
+from sklearn import metrics
+from xgboost import XGBClassifier, plot_tree
+from sklearn.model_selection import train_test_split
+import matplotlib.pyplot as plt
+df_cluster_total['new_cluster_label'] = df_cluster_total['new_cluster_label'].astype(str)
+plt.style.use('ggplot')
+
+X = df_cluster_total[['principal component 1','principal component 2',	'principal component 3']].values
+y = df_cluster_total[['new_cluster_label']].values.ravel()
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.30)
+
+model_XGB = XGBClassifier()
+model_XGB.fit(X_train, y_train)
+print(model_XGB)
+
+expected_y  = y_test
+predicted_y = model_XGB.predict(X_test)
+
+print(metrics.classification_report(expected_y, predicted_y))
+
+plot_tree(model_XGB)
+plt.show()
+
+# plot_tree(model_XGB, num_trees=4)
+# plt.show()
+
+# plot_tree(model_XGB, num_trees=0, rankdir='LR')
+# plt.show()
+
+### Take the label from Agglomerative clustering and implement classification for accuracy improvement
+from sklearn import datasets
+from sklearn import metrics
+from xgboost import XGBClassifier, plot_tree
+from sklearn.model_selection import train_test_split
+import matplotlib.pyplot as plt
+df_cluster_total['agglomerative_cluster'] = df_cluster_total['agglomerative_cluster'].astype(str)
+plt.style.use('ggplot')
+
+X = df_cluster_total[['principal component 1','principal component 2',	'principal component 3']].values
+y = df_cluster_total[['agglomerative_cluster']].values.ravel()
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.30)
+
+model_XGB = XGBClassifier()
+model_XGB.fit(X_train, y_train)
+print(model_XGB)
+
+expected_y  = y_test
+predicted_y = model_XGB.predict(X_test)
+
+print(metrics.classification_report(expected_y, predicted_y))
+
+plot_tree(model_XGB)
+plt.show()
+
+# plot_tree(model_XGB, num_trees=4)
+# plt.show()
+
+# plot_tree(model_XGB, num_trees=0, rankdir='LR')
+# plt.show()
+
+### Result Comparision between clustering and classification with Labels
+y_test['y_pred'] = y_pred
+print(y_test.to_string())
+
+### Check accuracy for Top2Vec
+X = Master2_df[['principal component 1','principal component 2',	'principal component 3']].values
+y = Master2_df[['topic_nums']].values.ravel()
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.30)
+
+model_XGB = XGBClassifier()
+model_XGB.fit(X_train, y_train)
+print(model_XGB)
+
+expected_y  = y_test
+predicted_y = model_XGB.predict(X_test)
+
+from sklearn.metrics import accuracy_score
+accuracy = accuracy_score(y_test, y_pred)
+print("accuracy: %.2f%%" % (accuracy * 100.0))
+
+plot_tree(model_XGB)
+plt.show()
+
+plot_tree(model_XGB, num_trees=4)
+plt.show()
+
+plot_tree(model_XGB, num_trees=0, rankdir='LR')
+plt.show()
+
+from sklearn import datasets
+from sklearn import metrics
+from xgboost import XGBClassifier, plot_tree
+from sklearn.model_selection import train_test_split
+import matplotlib.pyplot as plt
+
+plt.style.use('ggplot')
+
+X = merged_master_df[['principal component 1','principal component 2',	'principal component 3']].values
+y = merged_master_df[['topic_nums']].values.ravel()
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.30)
+
+model_XGB = XGBClassifier()
+model_XGB.fit(X_train, y_train)
+print(model_XGB)
+
+expected_y  = y_test
+predicted_y = model_XGB.predict(X_test)
+
+plot_tree(model_XGB)
+plt.show()
+
+plot_tree(model_XGB, num_trees=4)
+plt.show()
+
+plot_tree(model_XGB, num_trees=0, rankdir='LR')
+plt.show()
+
+print(metrics.classification_report(expected_y, predicted_y))
